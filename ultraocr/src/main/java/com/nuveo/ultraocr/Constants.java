@@ -8,6 +8,11 @@ public class Constants {
     public static final String AUTH_BASE_URL = "https://auth.apis.nuveo.ai/v2";
     public static final String STATUS_DONE = "done";
     public static final String STATUS_ERROR = "error";
+    public static final String APPLICATION_JSON = "application/json";
+    public static final String HEADER_ACCEPT = "Accept";
+    public static final String HEADER_CONTENT_TYPE = "Content-Type";
+    public static final String HEADER_AUTHORIZATION = "Authorization";
+    public static final String BEARER_PREFIX = "Authorization";
 
     private Constants() {
 

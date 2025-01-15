@@ -1,4 +1,4 @@
-package com.nuveo.ultraocr.response;
+package com.nuveo.ultraocr.responses;
 
 import com.google.gson.annotations.SerializedName;
 

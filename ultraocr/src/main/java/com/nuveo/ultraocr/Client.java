@@ -1,6 +1,8 @@
 package com.nuveo.ultraocr;
 
-import com.nuveo.ultraocr.response.*;
+import com.nuveo.ultraocr.responses.*;
+import com.nuveo.ultraocr.enums.*;
+import com.nuveo.ultraocr.exceptions.*;
 
 import java.io.IOException;
 import java.net.URI;
@@ -21,9 +23,9 @@ public class Client {
     private String authBaseUrl;
     private String token;
     private Instant expiresAt;
-    private int expires;
-    private int timeout;
-    private int interval;
+    private long expires;
+    private long timeout;
+    private long interval;
     private boolean autoRefresh;
     private HttpClient httpClient;
 
@@ -41,7 +43,7 @@ public class Client {
         this.httpClient = HttpClient.newHttpClient();
     }
 
-    public void setAutoRefresh(String clientID, String clientSecret, int expires) {
+    public void setAutoRefresh(String clientID, String clientSecret, long expires) {
         this.clientID = clientID;
         this.clientSecret = clientSecret;
         this.expires = expires;
@@ -57,11 +59,11 @@ public class Client {
         this.authBaseUrl = authBaseUrl;
     }
 
-    public void setTimeout(int timeout) {
+    public void setTimeout(long timeout) {
         this.timeout = timeout;
     }
 
-    public void setInterval(int interval) {
+    public void setInterval(long interval) {
         this.interval = interval;
     }
 
@@ -85,7 +87,7 @@ public class Client {
         return url + "?" + builder.toString();
     }
 
-    public void authenticate(String clientID, String clientSecret, int expires)
+    public void authenticate(String clientID, String clientSecret, long expires)
             throws IOException, InterruptedException {
         Map<Object, Object> data = new HashMap<>();
         data.put("ClientID", clientID);
@@ -152,7 +154,7 @@ public class Client {
         return response.body();
     }
 
-    public SignedUrlResponse generateSignedUrl(String service, String resource, Object metadata,
+    public SignedUrlResponse generateSignedUrl(String service, Resource resource, Object metadata,
             Map<String, String> params) throws IOException, InterruptedException {
         String url = String.format("%s/ocr/%s/%s", this.baseUrl, resource, service);
         String response = this.post(url, metadata, params);
@@ -172,5 +174,51 @@ public class Client {
         String response = this.get(url, null);
         Gson gson = new Gson();
         return gson.fromJson(response, JobResultResponse.class);
+    }
+
+    public JobResultResponse waitForJobDone(String batchKsuid, String jobKsuid)
+            throws IOException, InterruptedException, TimeoutException {
+        Instant end = Instant.now().plusSeconds(this.timeout);
+        JobResultResponse response;
+        while (true) {
+            response = this.getJobResult(batchKsuid, jobKsuid);
+            String status = response.getStatus();
+            if (status.equals(Constants.STATUS_DONE) || status.equals(Constants.STATUS_ERROR)) {
+                return response;
+            }
+
+            if (Instant.now().isBefore(end)) {
+                throw new TimeoutException(this.timeout);
+            }
+
+            Thread.sleep(this.interval * 1000);
+        }
+    }
+
+    public BatchStatusResponse waitForBatchDone(String batchKsuid, boolean waitJobs)
+            throws IOException, InterruptedException, TimeoutException {
+        Instant end = Instant.now().plusSeconds(this.timeout);
+        BatchStatusResponse response;
+        while (true) {
+            response = this.getBatchStatus(batchKsuid);
+            String status = response.getStatus();
+            if (status.equals(Constants.STATUS_DONE) || status.equals(Constants.STATUS_ERROR)) {
+                break;
+            }
+
+            if (Instant.now().isBefore(end)) {
+                throw new TimeoutException(this.timeout);
+            }
+
+            Thread.sleep(this.interval * 1000);
+        }
+
+        if (waitJobs) {
+            for (BatchStatusJobs job : response.getJobs()) {
+                waitForJobDone(response.getBatchKsuid(), job.getJobKsuid());
+            }
+        }
+
+        return response;
     }
 }

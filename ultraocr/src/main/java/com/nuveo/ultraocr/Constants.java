@@ -12,7 +12,11 @@ public class Constants {
     public static final String HEADER_ACCEPT = "Accept";
     public static final String HEADER_CONTENT_TYPE = "Content-Type";
     public static final String HEADER_AUTHORIZATION = "Authorization";
-    public static final String BEARER_PREFIX = "Authorization";
+    public static final String BEARER_PREFIX = "Bearer ";
+    public static final String KEY_DOCUMENT = "document";
+    public static final String KEY_FACEMATCH = "facematch";
+    public static final String KEY_EXTRA = "extra-document";
+    public static final String FLAG_TRUE = "true";
 
     private Constants() {
 

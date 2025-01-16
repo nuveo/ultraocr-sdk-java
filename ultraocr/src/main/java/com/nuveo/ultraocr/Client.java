@@ -10,9 +10,13 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 import com.google.gson.Gson;
 
@@ -133,7 +137,6 @@ public class Client {
                 .build();
 
         HttpResponse<String> response = this.httpClient.send(request, BodyHandlers.ofString());
-
         return response.body();
     }
 
@@ -220,5 +223,190 @@ public class Client {
         }
 
         return response;
+    }
+
+    public void uploadFile(String url, byte[] body) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header(Constants.HEADER_ACCEPT, Constants.APPLICATION_JSON)
+                .header(Constants.HEADER_CONTENT_TYPE, Constants.APPLICATION_JSON)
+                .PUT(HttpRequest.BodyPublishers.ofByteArray(body))
+                .build();
+        HttpResponse<String> response = this.httpClient.send(request, BodyHandlers.ofString());
+        response.statusCode();
+    }
+
+    public void uploadFileWithPath(String url, String filePath) throws IOException, InterruptedException {
+        Path path = Path.of(filePath);
+        byte[] file = Files.readAllBytes(path);
+        uploadFile(url, file);
+    }
+
+    public CreatedResponse sendJobSingleStep(String service, String file, Map<String, Object> metadata,
+            Map<String, String> params) throws IOException, InterruptedException {
+        Map<String, Object> body = new HashMap<>();
+        body.put("data", file);
+        body.put("metadata", metadata);
+
+        String url = String.format("%s/ocr/job/send/%s", this.baseUrl, service);
+        String response = this.post(url, metadata, params);
+
+        Gson gson = new Gson();
+        return gson.fromJson(response, CreatedResponse.class);
+    }
+
+    public CreatedResponse sendJobSingleStep(String service, String file, String facematchFile, String extraFile,
+            Map<String, Object> metadata, Map<String, String> params) throws IOException, InterruptedException {
+        Map<String, Object> body = new HashMap<>();
+        body.put("data", file);
+        body.put("metadata", metadata);
+
+        if (params.containsKey(Constants.KEY_FACEMATCH)
+                && params.get(Constants.KEY_FACEMATCH).equals(Constants.FLAG_TRUE)) {
+            body.put(Constants.KEY_FACEMATCH, facematchFile);
+        }
+
+        if (params.containsKey(Constants.KEY_EXTRA) && params.get(Constants.KEY_EXTRA).equals(Constants.FLAG_TRUE)) {
+            body.put("extra", extraFile);
+        }
+
+        String url = String.format("%s/ocr/job/send/%s", this.baseUrl, service);
+        String response = this.post(url, metadata, params);
+
+        Gson gson = new Gson();
+        return gson.fromJson(response, CreatedResponse.class);
+    }
+
+    public CreatedResponse sendJob(String service, String filePath, Map<String, Object> metadata,
+            Map<String, String> params) throws IOException, InterruptedException {
+        SignedUrlResponse response = this.generateSignedUrl(service, Resource.JOB, metadata, params);
+        Map<String, String> urls = response.getUrls();
+        this.uploadFileWithPath(urls.get(Constants.KEY_DOCUMENT), filePath);
+
+        CreatedResponse res = new CreatedResponse();
+        res.setId(response.getId());
+        res.setStatusUrl(response.getStatusUrl());
+        return res;
+    }
+
+    public CreatedResponse sendJob(String service, String filePath, String facematchFilePath, String extraFilePath,
+            Map<String, Object> metadata, Map<String, String> params) throws IOException, InterruptedException {
+        SignedUrlResponse response = this.generateSignedUrl(service, Resource.JOB, metadata, params);
+        Map<String, String> urls = response.getUrls();
+        this.uploadFileWithPath(urls.get(Constants.KEY_DOCUMENT), filePath);
+
+        if (params.containsKey(Constants.KEY_FACEMATCH)
+                && params.get(Constants.KEY_FACEMATCH).equals(Constants.FLAG_TRUE)) {
+            this.uploadFileWithPath(urls.get("selfie"), facematchFilePath);
+        }
+
+        if (params.containsKey(Constants.KEY_EXTRA) && params.get(Constants.KEY_EXTRA).equals(Constants.FLAG_TRUE)) {
+            this.uploadFileWithPath(urls.get("extra_document"), extraFilePath);
+        }
+
+        CreatedResponse res = new CreatedResponse();
+        res.setId(response.getId());
+        res.setStatusUrl(response.getStatusUrl());
+        return res;
+    }
+
+    public CreatedResponse sendJobBase64(String service, String file, Map<String, Object> metadata,
+            Map<String, String> params) throws IOException, InterruptedException {
+        SignedUrlResponse response = this.generateSignedUrl(service, Resource.JOB, metadata, params);
+        Map<String, String> urls = response.getUrls();
+        this.uploadFile(urls.get(Constants.KEY_DOCUMENT), file.getBytes());
+
+        CreatedResponse res = new CreatedResponse();
+        res.setId(response.getId());
+        res.setStatusUrl(response.getStatusUrl());
+        return res;
+    }
+
+    public CreatedResponse sendJobBase64(String service, String file, String facematchFile, String extraFile,
+            Map<String, Object> metadata, Map<String, String> params) throws IOException, InterruptedException {
+        SignedUrlResponse response = this.generateSignedUrl(service, Resource.JOB, metadata, params);
+        Map<String, String> urls = response.getUrls();
+        this.uploadFile(urls.get(Constants.KEY_DOCUMENT), file.getBytes());
+
+        if (params.containsKey(Constants.KEY_FACEMATCH)
+                && params.get(Constants.KEY_FACEMATCH).equals(Constants.FLAG_TRUE)) {
+            this.uploadFile(urls.get("selfie"), facematchFile.getBytes());
+        }
+
+        if (params.containsKey(Constants.KEY_EXTRA) && params.get(Constants.KEY_EXTRA).equals(Constants.FLAG_TRUE)) {
+            this.uploadFile(urls.get("extra_document"), extraFile.getBytes());
+        }
+
+        CreatedResponse res = new CreatedResponse();
+        res.setId(response.getId());
+        res.setStatusUrl(response.getStatusUrl());
+        return res;
+    }
+
+    public CreatedResponse sendBatch(String service, String filePath, Map<String, Object> metadata,
+            Map<String, String> params) throws IOException, InterruptedException {
+        SignedUrlResponse response = this.generateSignedUrl(service, Resource.BATCH, metadata, params);
+        Map<String, String> urls = response.getUrls();
+        this.uploadFileWithPath(urls.get(Constants.KEY_DOCUMENT), filePath);
+
+        CreatedResponse res = new CreatedResponse();
+        res.setId(response.getId());
+        res.setStatusUrl(response.getStatusUrl());
+        return res;
+    }
+
+    public CreatedResponse sendBatchBase64(String service, String file, Map<String, Object> metadata,
+            Map<String, String> params) throws IOException, InterruptedException {
+        SignedUrlResponse response = this.generateSignedUrl(service, Resource.BATCH, metadata, params);
+        Map<String, String> urls = response.getUrls();
+        this.uploadFile(urls.get(Constants.KEY_DOCUMENT), file.getBytes());
+
+        CreatedResponse res = new CreatedResponse();
+        res.setId(response.getId());
+        res.setStatusUrl(response.getStatusUrl());
+        return res;
+    }
+
+    public BatchStatusResponse createAndWaitBatch(String service, String filePath, Map<String, Object> metadata,
+            Map<String, String> params, boolean waitJobs) throws IOException, InterruptedException, TimeoutException {
+        CreatedResponse response = sendBatch(service, filePath, metadata, params);
+        return waitForBatchDone(response.getId(), waitJobs);
+    }
+
+    public JobResultResponse createAndWaitJob(String service, String filePath, Map<String, Object> metadata,
+            Map<String, String> params) throws IOException, InterruptedException, TimeoutException {
+        CreatedResponse response = sendJob(service, filePath, metadata, params);
+        return waitForJobDone(response.getId(), response.getId());
+    }
+
+    public JobResultResponse createAndWaitJob(String service, String filePath, String facematchFilePath,
+            String extraFilePath, Map<String, Object> metadata,
+            Map<String, String> params) throws IOException, InterruptedException, TimeoutException {
+        CreatedResponse response = sendJob(service, filePath, facematchFilePath, extraFilePath, metadata, params);
+        return waitForJobDone(response.getId(), response.getId());
+    }
+
+    public List<JobResultResponse> getJobs(String start, String end) throws IOException, InterruptedException {
+        String url = String.format("%s/ocr/job/results", this.baseUrl);
+        Map<String, String> params = new HashMap<>();
+        params.put("startDate", start);
+        params.put("endDate", end);
+
+        List<JobResultResponse> jobs = new ArrayList<>();
+        boolean hasNextPage = true;
+
+        while (hasNextPage) {
+            String response = this.get(url, params);
+            Gson gson = new Gson();
+            GetJobsResponse res = gson.fromJson(response, GetJobsResponse.class);
+
+            jobs.addAll(res.getJobs());
+            params.put("nextPageToken", res.getNextPageToken());
+
+            if (res.getNextPageToken().isEmpty()) {
+                hasNextPage = false;
+            }
+        }
+        return jobs;
     }
 }

@@ -137,6 +137,16 @@ public class Client {
         }
     }
 
+    /**
+     * Authenticate on UltraOCR.
+     * 
+     * @param clientID     the Client ID generated on Web Interface.
+     * @param clientSecret the Client Secret generated on Web Interface.
+     * @param expires      the token expires time (in minutes).
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
     public void authenticate(String clientID, String clientSecret, long expires)
             throws IOException, InterruptedException, InvalidStatusCodeException {
         Map<Object, Object> data = new HashMap<>();
@@ -201,6 +211,21 @@ public class Client {
         return this.httpClient.send(request, BodyHandlers.ofString());
     }
 
+    /**
+     * Generate signed url to send the document.
+     * 
+     * @param service  the the type of document to be sent.
+     * @param resource the way to process, whether job or batch
+     * @param metadata the metadata based on UltraOCR Docs format, optional in most
+     *                 cases.
+     * @param params   the query parameters based on UltraOCR Docs, optional in most
+     *                 cases.
+     * @return the job info with id.
+     * @see SignedUrlResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
     public SignedUrlResponse generateSignedUrl(String service, Resource resource, Object metadata,
             Map<String, String> params) throws IOException, InterruptedException, InvalidStatusCodeException {
         String url = String.format("%s/ocr/%s/%s", this.baseUrl, resource, service);
@@ -210,6 +235,15 @@ public class Client {
         return gson.fromJson(response.body(), SignedUrlResponse.class);
     }
 
+    /**
+     * Upload file given a content.
+     * 
+     * @param url  the url to upload the file.
+     * @param body the file content.
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
     public void uploadFile(String url, byte[] body)
             throws IOException, InterruptedException, InvalidStatusCodeException {
         HttpRequest request = HttpRequest.newBuilder()
@@ -222,6 +256,15 @@ public class Client {
         validateStatus(Constants.STATUS_OK, response.statusCode());
     }
 
+    /**
+     * Upload file given a file path.
+     * 
+     * @param url      the url to upload the file.
+     * @param filePath the file path.
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
     public void uploadFileWithPath(String url, String filePath)
             throws IOException, InterruptedException, InvalidStatusCodeException {
         Path path = Path.of(filePath);
@@ -229,6 +272,21 @@ public class Client {
         uploadFile(url, file);
     }
 
+    /**
+     * Send job in a single step on UltraOCR.
+     * 
+     * @param service  the the type of document to be sent.
+     * @param file     the file on base64 format.
+     * @param metadata the metadata based on UltraOCR Docs format, optional in most
+     *                 cases.
+     * @param params   the query parameters based on UltraOCR Docs, optional in most
+     *                 cases.
+     * @return the job info with id.
+     * @see CreatedResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
     public CreatedResponse sendJobSingleStep(String service, String file, Map<String, Object> metadata,
             Map<String, String> params) throws IOException, InterruptedException, InvalidStatusCodeException {
         Map<String, Object> body = new HashMap<>();
@@ -243,6 +301,23 @@ public class Client {
         return gson.fromJson(response.body(), CreatedResponse.class);
     }
 
+    /**
+     * Send job in a single step on UltraOCR.
+     * 
+     * @param service       the the type of document to be sent.
+     * @param file          the file on base64 format.
+     * @param facematchFile the facematch file on base64 format.
+     * @param extraFile     the extra file on base64 format.
+     * @param metadata      the metadata based on UltraOCR Docs format, optional in
+     *                      most cases.
+     * @param params        the query parameters based on UltraOCR Docs, optional in
+     *                      most cases.
+     * @return the job info with id.
+     * @see CreatedResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
     public CreatedResponse sendJobSingleStep(String service, String file, String facematchFile, String extraFile,
             Map<String, Object> metadata, Map<String, String> params)
             throws IOException, InterruptedException, InvalidStatusCodeException {
@@ -267,6 +342,21 @@ public class Client {
         return gson.fromJson(response.body(), CreatedResponse.class);
     }
 
+    /**
+     * Send job.
+     * 
+     * @param service  the the type of document to be sent.
+     * @param filePath the file path of the document.
+     * @param metadata the metadata based on UltraOCR Docs format, optional in most
+     *                 cases.
+     * @param params   the query parameters based on UltraOCR Docs, optional in most
+     *                 cases.
+     * @return the job info with id.
+     * @see CreatedResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
     public CreatedResponse sendJob(String service, String filePath, Map<String, Object> metadata,
             Map<String, String> params) throws IOException, InterruptedException, InvalidStatusCodeException {
         SignedUrlResponse response = this.generateSignedUrl(service, Resource.JOB, metadata, params);
@@ -279,6 +369,23 @@ public class Client {
         return res;
     }
 
+    /**
+     * Send job.
+     * 
+     * @param service           the the type of document to be sent.
+     * @param filePath          the file path of the document.
+     * @param facematchFilePath the facematch file path of the document.
+     * @param extraFilePath     the extra file path of the document.
+     * @param metadata          the metadata based on UltraOCR Docs format, optional
+     *                          in most cases.
+     * @param params            the query parameters based on UltraOCR Docs,
+     *                          optional in most cases.
+     * @return the job info with id.
+     * @see CreatedResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
     public CreatedResponse sendJob(String service, String filePath, String facematchFilePath, String extraFilePath,
             Map<String, Object> metadata, Map<String, String> params)
             throws IOException, InterruptedException, InvalidStatusCodeException {
@@ -301,6 +408,21 @@ public class Client {
         return res;
     }
 
+    /**
+     * Send job on base64 format.
+     * 
+     * @param service  the the type of document to be sent.
+     * @param file     the file on base64 format.
+     * @param metadata the metadata based on UltraOCR Docs format, optional in most
+     *                 cases.
+     * @param params   the query parameters based on UltraOCR Docs, optional in most
+     *                 cases.
+     * @return the job info with id.
+     * @see CreatedResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
     public CreatedResponse sendJobBase64(String service, String file, Map<String, Object> metadata,
             Map<String, String> params) throws IOException, InterruptedException, InvalidStatusCodeException {
         SignedUrlResponse response = this.generateSignedUrl(service, Resource.JOB, metadata, params);
@@ -313,6 +435,23 @@ public class Client {
         return res;
     }
 
+    /**
+     * Send job on base64 format.
+     * 
+     * @param service       the the type of document to be sent.
+     * @param file          the file on base64 format.
+     * @param facematchFile the facematch file on base64 format.
+     * @param extraFile     the extra file on base64 format.
+     * @param metadata      the metadata based on UltraOCR Docs format, optional in
+     *                      most cases.
+     * @param params        the query parameters based on UltraOCR Docs, optional in
+     *                      most cases.
+     * @return the job info with id.
+     * @see CreatedResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
     public CreatedResponse sendJobBase64(String service, String file, String facematchFile, String extraFile,
             Map<String, Object> metadata, Map<String, String> params)
             throws IOException, InterruptedException, InvalidStatusCodeException {
@@ -335,6 +474,21 @@ public class Client {
         return res;
     }
 
+    /**
+     * Send batch.
+     * 
+     * @param service  the the type of document to be sent.
+     * @param filePath the file path of the document.
+     * @param metadata the metadata based on UltraOCR Docs format, optional in most
+     *                 cases.
+     * @param params   the query parameters based on UltraOCR Docs, optional in most
+     *                 cases.
+     * @return the batch info with id.
+     * @see CreatedResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
     public CreatedResponse sendBatch(String service, String filePath, Map<String, Object> metadata,
             Map<String, String> params) throws IOException, InterruptedException, InvalidStatusCodeException {
         SignedUrlResponse response = this.generateSignedUrl(service, Resource.BATCH, metadata, params);
@@ -347,6 +501,21 @@ public class Client {
         return res;
     }
 
+    /**
+     * Send batch on base64 format.
+     * 
+     * @param service  the the type of document to be sent.
+     * @param file     the file on base64 format.
+     * @param metadata the metadata based on UltraOCR Docs format, optional in most
+     *                 cases.
+     * @param params   the query parameters based on UltraOCR Docs, optional in most
+     *                 cases.
+     * @return the batch info with id.
+     * @see CreatedResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
     public CreatedResponse sendBatchBase64(String service, String file, Map<String, Object> metadata,
             Map<String, String> params) throws IOException, InterruptedException, InvalidStatusCodeException {
         SignedUrlResponse response = this.generateSignedUrl(service, Resource.BATCH, metadata, params);

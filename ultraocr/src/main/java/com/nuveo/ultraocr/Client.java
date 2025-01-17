@@ -56,6 +56,57 @@ public class Client {
     }
 
     /**
+     * Class constructor with custom http client.
+     */
+    public Client(HttpClient httpClient) {
+        this.authBaseUrl = Constants.AUTH_BASE_URL;
+        this.baseUrl = Constants.BASE_URL;
+        this.timeout = Constants.API_TIMEOUT;
+        this.interval = Constants.POOLING_INTERVAL;
+        this.expires = Constants.DEFAULT_EXPIRATION_TIME;
+        this.clientID = "";
+        this.clientSecret = "";
+        this.token = "";
+        this.autoRefresh = false;
+        this.expiresAt = Instant.now();
+        this.httpClient = httpClient;
+    }
+
+    /**
+     * Class constructor with auto refresh token.
+     */
+    public Client(String clientID, String clientSecret, long expires) {
+        this.authBaseUrl = Constants.AUTH_BASE_URL;
+        this.baseUrl = Constants.BASE_URL;
+        this.timeout = Constants.API_TIMEOUT;
+        this.interval = Constants.POOLING_INTERVAL;
+        this.expires = Constants.DEFAULT_EXPIRATION_TIME;
+        this.clientID = clientID;
+        this.clientSecret = clientSecret;
+        this.expires = expires;
+        this.autoRefresh = true;
+        this.expiresAt = Instant.now();
+        this.httpClient = HttpClient.newHttpClient();
+    }
+
+    /**
+     * Class constructor with custom http client and auto refresh token.
+     */
+    public Client(HttpClient httpClient, String clientID, String clientSecret, long expires) {
+        this.authBaseUrl = Constants.AUTH_BASE_URL;
+        this.baseUrl = Constants.BASE_URL;
+        this.timeout = Constants.API_TIMEOUT;
+        this.interval = Constants.POOLING_INTERVAL;
+        this.expires = Constants.DEFAULT_EXPIRATION_TIME;
+        this.clientID = clientID;
+        this.clientSecret = clientSecret;
+        this.expires = expires;
+        this.autoRefresh = true;
+        this.expiresAt = Instant.now();
+        this.httpClient = httpClient;
+    }
+
+    /**
      * Update auto refresh configs.
      * 
      * @param clientID     the start time (in the format YYYY-MM-DD).
@@ -164,6 +215,7 @@ public class Client {
                 .header(Constants.HEADER_CONTENT_TYPE, Constants.APPLICATION_JSON)
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
+
         HttpResponse<String> response = this.httpClient.send(request, BodyHandlers.ofString());
         validateStatus(Constants.STATUS_OK, response.statusCode());
 
@@ -184,7 +236,6 @@ public class Client {
         String body = gson.toJson(data);
 
         URI uri = URI.create(getFullUrl(url, params));
-
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(uri)
                 .header(Constants.HEADER_ACCEPT, Constants.APPLICATION_JSON)
@@ -200,7 +251,6 @@ public class Client {
             throws IOException, InterruptedException, InvalidStatusCodeException {
         this.autoAuthenticate();
         URI uri = URI.create(getFullUrl(url, params));
-
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(uri)
                 .header(Constants.HEADER_ACCEPT, Constants.APPLICATION_JSON)
@@ -231,6 +281,7 @@ public class Client {
         String url = String.format("%s/ocr/%s/%s", this.baseUrl, resource, service);
         HttpResponse<String> response = this.post(url, metadata, params);
         validateStatus(Constants.STATUS_OK, response.statusCode());
+
         Gson gson = new Gson();
         return gson.fromJson(response.body(), SignedUrlResponse.class);
     }
@@ -360,6 +411,7 @@ public class Client {
     public CreatedResponse sendJob(String service, String filePath, Map<String, Object> metadata,
             Map<String, String> params) throws IOException, InterruptedException, InvalidStatusCodeException {
         SignedUrlResponse response = this.generateSignedUrl(service, Resource.JOB, metadata, params);
+        
         Map<String, String> urls = response.getUrls();
         this.uploadFileWithPath(urls.get(Constants.KEY_DOCUMENT), filePath);
 
@@ -390,6 +442,7 @@ public class Client {
             Map<String, Object> metadata, Map<String, String> params)
             throws IOException, InterruptedException, InvalidStatusCodeException {
         SignedUrlResponse response = this.generateSignedUrl(service, Resource.JOB, metadata, params);
+
         Map<String, String> urls = response.getUrls();
         this.uploadFileWithPath(urls.get(Constants.KEY_DOCUMENT), filePath);
 
@@ -426,6 +479,7 @@ public class Client {
     public CreatedResponse sendJobBase64(String service, String file, Map<String, Object> metadata,
             Map<String, String> params) throws IOException, InterruptedException, InvalidStatusCodeException {
         SignedUrlResponse response = this.generateSignedUrl(service, Resource.JOB, metadata, params);
+
         Map<String, String> urls = response.getUrls();
         this.uploadFile(urls.get(Constants.KEY_DOCUMENT), file.getBytes());
 
@@ -456,6 +510,7 @@ public class Client {
             Map<String, Object> metadata, Map<String, String> params)
             throws IOException, InterruptedException, InvalidStatusCodeException {
         SignedUrlResponse response = this.generateSignedUrl(service, Resource.JOB, metadata, params);
+
         Map<String, String> urls = response.getUrls();
         this.uploadFile(urls.get(Constants.KEY_DOCUMENT), file.getBytes());
 
@@ -492,6 +547,7 @@ public class Client {
     public CreatedResponse sendBatch(String service, String filePath, Map<String, Object> metadata,
             Map<String, String> params) throws IOException, InterruptedException, InvalidStatusCodeException {
         SignedUrlResponse response = this.generateSignedUrl(service, Resource.BATCH, metadata, params);
+
         Map<String, String> urls = response.getUrls();
         this.uploadFileWithPath(urls.get(Constants.KEY_DOCUMENT), filePath);
 
@@ -519,6 +575,7 @@ public class Client {
     public CreatedResponse sendBatchBase64(String service, String file, Map<String, Object> metadata,
             Map<String, String> params) throws IOException, InterruptedException, InvalidStatusCodeException {
         SignedUrlResponse response = this.generateSignedUrl(service, Resource.BATCH, metadata, params);
+
         Map<String, String> urls = response.getUrls();
         this.uploadFile(urls.get(Constants.KEY_DOCUMENT), file.getBytes());
 
@@ -543,6 +600,7 @@ public class Client {
         String url = String.format("%s/ocr/batch/status/%s", this.baseUrl, batchKsuid);
         HttpResponse<String> response = this.get(url, null);
         validateStatus(Constants.STATUS_OK, response.statusCode());
+
         Gson gson = new Gson();
         return gson.fromJson(response.body(), BatchStatusResponse.class);
     }
@@ -565,6 +623,7 @@ public class Client {
         String url = String.format("%s/ocr/job/result/%s/%s", this.baseUrl, batchKsuid, jobKsuid);
         HttpResponse<String> response = this.get(url, null);
         validateStatus(Constants.STATUS_OK, response.statusCode());
+
         Gson gson = new Gson();
         return gson.fromJson(response.body(), JobResultResponse.class);
     }
@@ -587,6 +646,7 @@ public class Client {
             throws IOException, InterruptedException, TimeoutException, InvalidStatusCodeException {
         Instant end = Instant.now().plusSeconds(this.timeout);
         JobResultResponse response;
+
         while (true) {
             response = this.getJobResult(batchKsuid, jobKsuid);
             String status = response.getStatus();
@@ -619,6 +679,7 @@ public class Client {
             throws IOException, InterruptedException, TimeoutException, InvalidStatusCodeException {
         Instant end = Instant.now().plusSeconds(this.timeout);
         BatchStatusResponse response;
+
         while (true) {
             response = this.getBatchStatus(batchKsuid);
             String status = response.getStatus();
@@ -740,16 +801,17 @@ public class Client {
         while (hasNextPage) {
             HttpResponse<String> response = this.get(url, params);
             validateStatus(Constants.STATUS_OK, response.statusCode());
+
             Gson gson = new Gson();
             GetJobsResponse res = gson.fromJson(response.body(), GetJobsResponse.class);
 
             jobs.addAll(res.getJobs());
             params.put("nextPageToken", res.getNextPageToken());
-
             if (res.getNextPageToken().isEmpty()) {
                 hasNextPage = false;
             }
         }
+
         return jobs;
     }
 }

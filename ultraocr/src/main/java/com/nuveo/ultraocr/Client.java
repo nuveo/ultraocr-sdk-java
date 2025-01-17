@@ -21,9 +21,10 @@ import java.util.ArrayList;
 import com.google.gson.Gson;
 
 /**
-* Client to help on UltraOCR usage. For more details about all arguments and returns,
-* access the oficial system documentation on https://docs.nuveo.ai/ocr/v2/.
-*/
+ * Client to help on UltraOCR usage. For more details about all arguments and
+ * returns,
+ * access the oficial system documentation on https://docs.nuveo.ai/ocr/v2/.
+ */
 public class Client {
     private String clientID;
     private String clientSecret;
@@ -37,9 +38,9 @@ public class Client {
     private boolean autoRefresh;
     private HttpClient httpClient;
 
-    /** 
-    * Class constructor.
-    */
+    /**
+     * Class constructor.
+     */
     public Client() {
         this.authBaseUrl = Constants.AUTH_BASE_URL;
         this.baseUrl = Constants.BASE_URL;
@@ -54,6 +55,13 @@ public class Client {
         this.httpClient = HttpClient.newHttpClient();
     }
 
+    /**
+     * Update auto refresh configs.
+     * 
+     * @param clientID     the start time (in the format YYYY-MM-DD).
+     * @param clientSecret the end time (in the format YYYY-MM-DD).
+     * @param expires      the end time (in the format YYYY-MM-DD).
+     */
     public void setAutoRefresh(String clientID, String clientSecret, long expires) {
         this.clientID = clientID;
         this.clientSecret = clientSecret;
@@ -62,22 +70,47 @@ public class Client {
         this.expiresAt = Instant.now();
     }
 
+    /**
+     * Update base url.
+     * 
+     * @param baseUrl the base url.
+     */
     public void setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
     }
 
+    /**
+     * Update auth base url.
+     * 
+     * @param authBaseUrl the auth base url.
+     */
     public void setAuthBaseUrl(String authBaseUrl) {
         this.authBaseUrl = authBaseUrl;
     }
 
+    /**
+     * Update pooling timeout.
+     * 
+     * @param timeout the timeout (in seconds).
+     */
     public void setTimeout(long timeout) {
         this.timeout = timeout;
     }
 
+    /**
+     * Update pooling interval.
+     * 
+     * @param interval the interval (in seconds).
+     */
     public void setInterval(long interval) {
         this.interval = interval;
     }
 
+    /**
+     * Update the http client.
+     * 
+     * @param httpClient the http client.
+     */
     public void setHttpClient(HttpClient httpClient) {
         this.httpClient = httpClient;
     }
@@ -175,70 +208,6 @@ public class Client {
         validateStatus(Constants.STATUS_OK, response.statusCode());
         Gson gson = new Gson();
         return gson.fromJson(response.body(), SignedUrlResponse.class);
-    }
-
-    public BatchStatusResponse getBatchStatus(String batchKsuid)
-            throws IOException, InterruptedException, InvalidStatusCodeException {
-        String url = String.format("%s/ocr/batch/status/%s", this.baseUrl, batchKsuid);
-        HttpResponse<String> response = this.get(url, null);
-        validateStatus(Constants.STATUS_OK, response.statusCode());
-        Gson gson = new Gson();
-        return gson.fromJson(response.body(), BatchStatusResponse.class);
-    }
-
-    public JobResultResponse getJobResult(String batchKsuid, String jobKsuid)
-            throws IOException, InterruptedException, InvalidStatusCodeException {
-        String url = String.format("%s/ocr/job/result/%s/%s", this.baseUrl, batchKsuid, jobKsuid);
-        HttpResponse<String> response = this.get(url, null);
-        validateStatus(Constants.STATUS_OK, response.statusCode());
-        Gson gson = new Gson();
-        return gson.fromJson(response.body(), JobResultResponse.class);
-    }
-
-    public JobResultResponse waitForJobDone(String batchKsuid, String jobKsuid)
-            throws IOException, InterruptedException, TimeoutException, InvalidStatusCodeException {
-        Instant end = Instant.now().plusSeconds(this.timeout);
-        JobResultResponse response;
-        while (true) {
-            response = this.getJobResult(batchKsuid, jobKsuid);
-            String status = response.getStatus();
-            if (status.equals(Constants.STATUS_DONE) || status.equals(Constants.STATUS_ERROR)) {
-                return response;
-            }
-
-            if (Instant.now().isBefore(end)) {
-                throw new TimeoutException(this.timeout);
-            }
-
-            Thread.sleep(this.interval * 1000);
-        }
-    }
-
-    public BatchStatusResponse waitForBatchDone(String batchKsuid, boolean waitJobs)
-            throws IOException, InterruptedException, TimeoutException, InvalidStatusCodeException {
-        Instant end = Instant.now().plusSeconds(this.timeout);
-        BatchStatusResponse response;
-        while (true) {
-            response = this.getBatchStatus(batchKsuid);
-            String status = response.getStatus();
-            if (status.equals(Constants.STATUS_DONE) || status.equals(Constants.STATUS_ERROR)) {
-                break;
-            }
-
-            if (Instant.now().isBefore(end)) {
-                throw new TimeoutException(this.timeout);
-            }
-
-            Thread.sleep(this.interval * 1000);
-        }
-
-        if (waitJobs) {
-            for (BatchStatusJobs job : response.getJobs()) {
-                waitForJobDone(response.getBatchKsuid(), job.getJobKsuid());
-            }
-        }
-
-        return response;
     }
 
     public void uploadFile(String url, byte[] body)
@@ -390,13 +359,136 @@ public class Client {
         return res;
     }
 
-    public BatchStatusResponse createAndWaitBatch(String service, String filePath, Map<String, Object> metadata,
-            Map<String, String> params, boolean waitJobs)
-            throws IOException, InterruptedException, TimeoutException, InvalidStatusCodeException {
-        CreatedResponse response = sendBatch(service, filePath, metadata, params);
-        return waitForBatchDone(response.getId(), waitJobs);
+    /**
+     * Get document batch status.
+     * 
+     * @param batchKsuid the id of the batch, given on batch creation.
+     * @return the batch with status.
+     * @see BatchStatusResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
+    public BatchStatusResponse getBatchStatus(String batchKsuid)
+            throws IOException, InterruptedException, InvalidStatusCodeException {
+        String url = String.format("%s/ocr/batch/status/%s", this.baseUrl, batchKsuid);
+        HttpResponse<String> response = this.get(url, null);
+        validateStatus(Constants.STATUS_OK, response.statusCode());
+        Gson gson = new Gson();
+        return gson.fromJson(response.body(), BatchStatusResponse.class);
     }
 
+    /**
+     * Get job result.
+     * 
+     * @param batchKsuid the id of the batch, given on batch creation(repeat the
+     *                   job_id if batch wasn't created).
+     * @param jobKsuid   the id of the job, given on job creation or on batch
+     *                   status.
+     * @return the job response.
+     * @see JobResultResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
+    public JobResultResponse getJobResult(String batchKsuid, String jobKsuid)
+            throws IOException, InterruptedException, InvalidStatusCodeException {
+        String url = String.format("%s/ocr/job/result/%s/%s", this.baseUrl, batchKsuid, jobKsuid);
+        HttpResponse<String> response = this.get(url, null);
+        validateStatus(Constants.STATUS_OK, response.statusCode());
+        Gson gson = new Gson();
+        return gson.fromJson(response.body(), JobResultResponse.class);
+    }
+
+    /**
+     * Wait the job to be processed.
+     * 
+     * @param batchKsuid the id of the batch, given on batch creation(repeat the
+     *                   job_id if batch wasn't created).
+     * @param jobKsuid   the id of the job, given on job creation or on batch
+     *                   status.
+     * @return the job with result.
+     * @see JobResultResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws TimeoutException           if job don't get done in the timeout time.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
+    public JobResultResponse waitForJobDone(String batchKsuid, String jobKsuid)
+            throws IOException, InterruptedException, TimeoutException, InvalidStatusCodeException {
+        Instant end = Instant.now().plusSeconds(this.timeout);
+        JobResultResponse response;
+        while (true) {
+            response = this.getJobResult(batchKsuid, jobKsuid);
+            String status = response.getStatus();
+            if (status.equals(Constants.STATUS_DONE) || status.equals(Constants.STATUS_ERROR)) {
+                return response;
+            }
+
+            if (Instant.now().isBefore(end)) {
+                throw new TimeoutException(this.timeout);
+            }
+
+            Thread.sleep(this.interval * 1000);
+        }
+    }
+
+    /**
+     * Wait the batch to be processed.
+     * 
+     * @param batchKsuid the id of the batch, given on batch creation.
+     * @param waitJobs   indicate if must wait the jobs to be processed.
+     * @return the batch with status.
+     * @see BatchStatusResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws TimeoutException           if batch don't get done in the timeout
+     *                                    time.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
+    public BatchStatusResponse waitForBatchDone(String batchKsuid, boolean waitJobs)
+            throws IOException, InterruptedException, TimeoutException, InvalidStatusCodeException {
+        Instant end = Instant.now().plusSeconds(this.timeout);
+        BatchStatusResponse response;
+        while (true) {
+            response = this.getBatchStatus(batchKsuid);
+            String status = response.getStatus();
+            if (status.equals(Constants.STATUS_DONE) || status.equals(Constants.STATUS_ERROR)) {
+                break;
+            }
+
+            if (Instant.now().isBefore(end)) {
+                throw new TimeoutException(this.timeout);
+            }
+
+            Thread.sleep(this.interval * 1000);
+        }
+
+        if (waitJobs) {
+            for (BatchStatusJobs job : response.getJobs()) {
+                waitForJobDone(response.getBatchKsuid(), job.getJobKsuid());
+            }
+        }
+
+        return response;
+    }
+
+    /**
+     * Create and wait for job done.
+     * 
+     * @param service  the the type of document to be sent.
+     * @param filePath the file path of the document.
+     * @param metadata the metadata based on UltraOCR Docs format, optional in most
+     *                 cases.
+     * @param params   the query parameters based on UltraOCR Docs, optional in most
+     *                 cases.
+     * @return the job with result.
+     * @see JobResultResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws TimeoutException           if job don't get done in the timeout time.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
     public JobResultResponse createAndWaitJob(String service, String filePath, Map<String, Object> metadata,
             Map<String, String> params)
             throws IOException, InterruptedException, TimeoutException, InvalidStatusCodeException {
@@ -404,6 +496,24 @@ public class Client {
         return waitForJobDone(response.getId(), response.getId());
     }
 
+    /**
+     * Create and wait for job done.
+     * 
+     * @param service           the the type of document to be sent.
+     * @param filePath          the file path of the document.
+     * @param facematchFilePath the facematch file path of the document.
+     * @param extraFilePath     the extra file path of the document.
+     * @param metadata          the metadata based on UltraOCR Docs format, optional
+     *                          in most cases.
+     * @param params            the query parameters based on UltraOCR Docs,
+     *                          optional in most cases.
+     * @return the job with result.
+     * @see JobResultResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws TimeoutException           if job don't get done in the timeout time.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
     public JobResultResponse createAndWaitJob(String service, String filePath, String facematchFilePath,
             String extraFilePath, Map<String, Object> metadata,
             Map<String, String> params)
@@ -413,15 +523,41 @@ public class Client {
     }
 
     /**
-    * Gets the jobs in a time interval.
-    * @param  start  the start time (in the format YYYY-MM-DD).
-    * @param  end    the end time (in the format YYYY-MM-DD).
-    * @return        a list with the jobs.
-    * @see           JobResultResponse
-    * @throws        InvalidStatusCodeException if status code is not 200.
-    * @throws        InterruptedException if http request fail.
-    * @throws        IOException if http request fail.
-    */
+     * Create and wait for batch done.
+     * 
+     * @param service  the the type of document to be sent.
+     * @param filePath the file path of the document.
+     * @param metadata the metadata based on UltraOCR Docs format, optional in most
+     *                 cases.
+     * @param params   the query parameters based on UltraOCR Docs, optional in most
+     *                 cases.
+     * @param waitJobs indicate if must wait the jobs to be processed.
+     * @return the batch with status.
+     * @see BatchStatusResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws TimeoutException           if batch don't get done in the timeout
+     *                                    time.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
+    public BatchStatusResponse createAndWaitBatch(String service, String filePath, Map<String, Object> metadata,
+            Map<String, String> params, boolean waitJobs)
+            throws IOException, InterruptedException, TimeoutException, InvalidStatusCodeException {
+        CreatedResponse response = sendBatch(service, filePath, metadata, params);
+        return waitForBatchDone(response.getId(), waitJobs);
+    }
+
+    /**
+     * Gets the jobs in a time interval.
+     * 
+     * @param start the start time (in the format YYYY-MM-DD).
+     * @param end   the end time (in the format YYYY-MM-DD).
+     * @return a list with the jobs.
+     * @see JobResultResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
     public List<JobResultResponse> getJobs(String start, String end)
             throws IOException, InterruptedException, InvalidStatusCodeException {
         String url = String.format("%s/ocr/job/results", this.baseUrl);

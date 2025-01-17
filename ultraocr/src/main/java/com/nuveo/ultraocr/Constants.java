@@ -1,6 +1,7 @@
 package com.nuveo.ultraocr;
 
 public class Constants {
+    public static final int STATUS_OK = 200;
     public static final int POOLING_INTERVAL = 1;
     public static final int API_TIMEOUT = 30;
     public static final int DEFAULT_EXPIRATION_TIME = 60;

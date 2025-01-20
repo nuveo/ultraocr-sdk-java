@@ -598,7 +598,7 @@ public class Client {
     public BatchStatusResponse getBatchStatus(String batchKsuid)
             throws IOException, InterruptedException, InvalidStatusCodeException {
         String url = String.format("%s/ocr/batch/status/%s", this.baseUrl, batchKsuid);
-        HttpResponse<String> response = this.get(url, null);
+        HttpResponse<String> response = this.get(url, new HashMap<>());
         validateStatus(Constants.STATUS_OK, response.statusCode());
 
         Gson gson = new Gson();
@@ -621,7 +621,7 @@ public class Client {
     public JobResultResponse getJobResult(String batchKsuid, String jobKsuid)
             throws IOException, InterruptedException, InvalidStatusCodeException {
         String url = String.format("%s/ocr/job/result/%s/%s", this.baseUrl, batchKsuid, jobKsuid);
-        HttpResponse<String> response = this.get(url, null);
+        HttpResponse<String> response = this.get(url, new HashMap<>());
         validateStatus(Constants.STATUS_OK, response.statusCode());
 
         Gson gson = new Gson();

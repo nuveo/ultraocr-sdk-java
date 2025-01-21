@@ -6,7 +6,7 @@
 
   <groupId>com.nuveo.ultraocr</groupId>
   <artifactId>ultraocr</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0.0</version>
 
   <name>ultraocr</name>
   <url>https://ultraocr.com.br</url>

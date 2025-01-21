@@ -345,7 +345,7 @@ public class Client {
         body.put("metadata", metadata);
 
         String url = String.format("%s/ocr/job/send/%s", this.baseUrl, service);
-        HttpResponse<String> response = this.post(url, metadata, params);
+        HttpResponse<String> response = this.post(url, body, params);
         validateStatus(Constants.STATUS_OK, response.statusCode());
 
         Gson gson = new Gson();
@@ -544,7 +544,7 @@ public class Client {
      * @throws InterruptedException       if http request fail.
      * @throws IOException                if http request fail.
      */
-    public CreatedResponse sendBatch(String service, String filePath, Map<String, Object> metadata,
+    public CreatedResponse sendBatch(String service, String filePath, List<Map<String, Object>> metadata,
             Map<String, String> params) throws IOException, InterruptedException, InvalidStatusCodeException {
         SignedUrlResponse response = this.generateSignedUrl(service, Resource.BATCH, metadata, params);
 
@@ -572,7 +572,7 @@ public class Client {
      * @throws InterruptedException       if http request fail.
      * @throws IOException                if http request fail.
      */
-    public CreatedResponse sendBatchBase64(String service, String file, Map<String, Object> metadata,
+    public CreatedResponse sendBatchBase64(String service, String file, List<Map<String, Object>> metadata,
             Map<String, String> params) throws IOException, InterruptedException, InvalidStatusCodeException {
         SignedUrlResponse response = this.generateSignedUrl(service, Resource.BATCH, metadata, params);
 
@@ -696,7 +696,7 @@ public class Client {
 
         if (waitJobs) {
             for (BatchStatusJobs job : response.getJobs()) {
-                waitForJobDone(response.getBatchKsuid(), job.getJobKsuid());
+                waitForJobDone(batchKsuid, job.getJobKsuid());
             }
         }
 
@@ -770,7 +770,7 @@ public class Client {
      * @throws InterruptedException       if http request fail.
      * @throws IOException                if http request fail.
      */
-    public BatchStatusResponse createAndWaitBatch(String service, String filePath, Map<String, Object> metadata,
+    public BatchStatusResponse createAndWaitBatch(String service, String filePath, List<Map<String, Object>> metadata,
             Map<String, String> params, boolean waitJobs)
             throws IOException, InterruptedException, TimeoutException, InvalidStatusCodeException {
         CreatedResponse response = sendBatch(service, filePath, metadata, params);
@@ -806,8 +806,9 @@ public class Client {
             GetJobsResponse res = gson.fromJson(response.body(), GetJobsResponse.class);
 
             jobs.addAll(res.getJobs());
-            params.put("nextPageToken", res.getNextPageToken());
-            if (res.getNextPageToken().isEmpty()) {
+            String nextPageToken = res.getNextPageToken();
+            params.put("nextPageToken", nextPageToken);
+            if (nextPageToken == null || nextPageToken.isEmpty()) {
                 hasNextPage = false;
             }
         }

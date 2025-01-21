@@ -6,13 +6,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import com.nuveo.ultraocr.enums.Resource;
 import com.nuveo.ultraocr.exceptions.InvalidStatusCodeException;
+import com.nuveo.ultraocr.exceptions.TimeoutException;
 
 class ClientTest {
     @Test
@@ -192,7 +196,8 @@ class ClientTest {
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient, "123", "123", 60);
         HashMap map = new HashMap<>();
-        assertDoesNotThrow(() -> client.sendBatch("rg", "./pom.xml", map, map));
+        List<Map<String,Object>> metadata = new ArrayList<>();
+        assertDoesNotThrow(() -> client.sendBatch("rg", "./pom.xml", metadata, map));
     }
 
     @Test
@@ -203,7 +208,8 @@ class ClientTest {
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient);
         HashMap map = new HashMap<>();
-        assertThrows(InvalidStatusCodeException.class, () -> client.sendBatch("123", "123", map, map));
+        List<Map<String,Object>> metadata = new ArrayList<>();
+        assertThrows(InvalidStatusCodeException.class, () -> client.sendBatch("123", "123", metadata, map));
     }
 
     @Test
@@ -265,7 +271,8 @@ class ClientTest {
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient, "123", "123", 60);
         HashMap map = new HashMap<>();
-        assertDoesNotThrow(() -> client.sendBatchBase64("rg", ".123", map, map));
+        List<Map<String,Object>> metadata = new ArrayList<>();
+        assertDoesNotThrow(() -> client.sendBatchBase64("rg", "123", metadata, map));
     }
 
     @Test
@@ -276,7 +283,8 @@ class ClientTest {
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient);
         HashMap map = new HashMap<>();
-        assertThrows(InvalidStatusCodeException.class, () -> client.sendBatchBase64("123", "123", map, map));
+        List<Map<String,Object>> metadata = new ArrayList<>();
+        assertThrows(InvalidStatusCodeException.class, () -> client.sendBatchBase64("123", "123", metadata, map));
     }
 
     @Test
@@ -326,5 +334,189 @@ class ClientTest {
         Client client = new Client(httpClient);
         HashMap map = new HashMap<>();
         assertThrows(InvalidStatusCodeException.class, () -> client.sendJobBase64("123", "123", "123", "123", map, map));
+    }
+
+    @Test
+    void shouldWaitForJobDone() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(200);
+        Mockito.when(mockResponse.body()).thenReturn("{\"status\":\"done\"}");
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        assertDoesNotThrow(() -> client.waitForJobDone("123", "123"));
+    }
+
+    @Test
+    void shouldFailToWaitForJobDone() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(400);
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        assertThrows(InvalidStatusCodeException.class, () -> client.waitForJobDone("123", "123"));
+    }
+
+    @Test
+    void shouldFailToWaitForJobDoneTimeout() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(200);
+        Mockito.when(mockResponse.body()).thenReturn("{\"status\":\"processing\"}");
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        client.setTimeout(1);
+        assertThrows(TimeoutException.class, () -> client.waitForJobDone("123", "123"));
+    }
+
+    @Test
+    void shouldWaitForBatchDone() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(200);
+        Mockito.when(mockResponse.body()).thenReturn("{\"status\":\"done\"}");
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        assertDoesNotThrow(() -> client.waitForBatchDone("123", false));
+    }
+
+    @Test
+    void shouldWaitForBatchDoneWaitJobs() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(200);
+        Mockito.when(mockResponse.body()).thenReturn("{\"status\":\"done\", \"jobs\":[{\"job_ksuid\":\"1234\"}]}");
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        assertDoesNotThrow(() -> client.waitForBatchDone("123", true));
+    }
+
+    @Test
+    void shouldFailToWaitForBatchDone() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(400);
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        assertThrows(InvalidStatusCodeException.class, () -> client.waitForBatchDone("123", false));
+    }
+
+    @Test
+    void shouldFailToWaitForBatchDoneTimeout() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(200);
+        Mockito.when(mockResponse.body()).thenReturn("{\"status\":\"processing\"}");
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        client.setTimeout(1);
+        assertThrows(TimeoutException.class, () -> client.waitForBatchDone("123", false));
+    }
+
+    @Test
+    void shouldCreateAndWaitBatch() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(200);
+        Mockito.when(mockResponse.body()).thenReturn("{\"urls\":{\"document\": \"https://www.example.com\", \"selfie\": \"https://www.example.com\", \"extra_document\": \"https://www.example.com\"}, \"status\":\"done\"}");
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        HashMap map = new HashMap<>();
+        List<Map<String,Object>> metadata = new ArrayList<>();
+        assertDoesNotThrow(() -> client.createAndWaitBatch("123", "./pom.xml", metadata, map, false));
+    }
+
+
+    @Test
+    void shouldFailToCreateAndWaitBatch() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(400);
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        HashMap map = new HashMap<>();
+        List<Map<String,Object>> metadata = new ArrayList<>();
+        assertThrows(InvalidStatusCodeException.class, () -> client.createAndWaitBatch("123", "./pom.xml", metadata, map, false));
+    }
+
+    @Test
+    void shouldCreateAndWaitJob() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(200);
+        Mockito.when(mockResponse.body()).thenReturn("{\"urls\":{\"document\": \"https://www.example.com\", \"selfie\": \"https://www.example.com\", \"extra_document\": \"https://www.example.com\"}, \"status\":\"done\"}");
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        HashMap map = new HashMap<>();
+        assertDoesNotThrow(() -> client.createAndWaitJob("123", "./pom.xml", map, map));
+    }
+
+
+    @Test
+    void shouldFailToCreateAndWaitJob() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(400);
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        HashMap map = new HashMap<>();
+        assertThrows(InvalidStatusCodeException.class, () -> client.createAndWaitJob("123", "./pom.xml", map, map));
+    }
+
+    @Test
+    void shouldCreateAndWaitJobComplete() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(200);
+        Mockito.when(mockResponse.body()).thenReturn("{\"urls\":{\"document\": \"https://www.example.com\", \"selfie\": \"https://www.example.com\", \"extra_document\": \"https://www.example.com\"}, \"status\":\"done\"}");
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        HashMap map = new HashMap<>();
+        assertDoesNotThrow(() -> client.createAndWaitJob("123", "./pom.xml", map, map));
+    }
+
+
+    @Test
+    void shouldFailToCreateAndWaitJobComplete() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(400);
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        HashMap map = new HashMap<>();
+        assertThrows(InvalidStatusCodeException.class, () -> client.createAndWaitJob("123", "./pom.xml", map, map));
+    }
+
+
+    @Test
+    void shouldGetJobs() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(200);
+        Mockito.when(mockResponse.body()).thenReturn("{\"jobs\":[{\"job_ksuid\":\"1234\"}]}");
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient, "123", "123", 60);
+        assertDoesNotThrow(() -> client.getJobs("123", "123"));
+    }
+
+    @Test
+    void shouldGetJobsWithToken() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(200);
+        Mockito.when(mockResponse.body()).thenReturn("{\"jobs\":[{\"job_ksuid\":\"1234\"}], \"nextPageToken\": \"1234\"}").thenReturn("{\"jobs\":[{\"job_ksuid\":\"1234\"}]}");
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient, "123", "123", 60);
+        assertDoesNotThrow(() -> client.getJobs("123", "123"));
+    }
+
+    @Test
+    void shouldFailToGetJobs() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(400);
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        assertThrows(InvalidStatusCodeException.class, () -> client.getJobs("123", "123"));
     }
 }

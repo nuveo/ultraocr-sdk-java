@@ -299,8 +299,6 @@ public class Client {
             throws IOException, InterruptedException, InvalidStatusCodeException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
-                .header(Constants.HEADER_ACCEPT, Constants.APPLICATION_JSON)
-                .header(Constants.HEADER_CONTENT_TYPE, Constants.APPLICATION_JSON)
                 .PUT(HttpRequest.BodyPublishers.ofByteArray(body))
                 .build();
         HttpResponse<String> response = this.httpClient.send(request, BodyHandlers.ofString());
@@ -478,6 +476,7 @@ public class Client {
      */
     public CreatedResponse sendJobBase64(String service, String file, Map<String, Object> metadata,
             Map<String, String> params) throws IOException, InterruptedException, InvalidStatusCodeException {
+        params.put(Constants.BASE64_ATTRIBUTE, Constants.FLAG_TRUE);
         SignedUrlResponse response = this.generateSignedUrl(service, Resource.JOB, metadata, params);
 
         Map<String, String> urls = response.getUrls();
@@ -509,6 +508,7 @@ public class Client {
     public CreatedResponse sendJobBase64(String service, String file, String facematchFile, String extraFile,
             Map<String, Object> metadata, Map<String, String> params)
             throws IOException, InterruptedException, InvalidStatusCodeException {
+        params.put(Constants.BASE64_ATTRIBUTE, Constants.FLAG_TRUE);
         SignedUrlResponse response = this.generateSignedUrl(service, Resource.JOB, metadata, params);
 
         Map<String, String> urls = response.getUrls();
@@ -574,6 +574,7 @@ public class Client {
      */
     public CreatedResponse sendBatchBase64(String service, String file, List<Map<String, Object>> metadata,
             Map<String, String> params) throws IOException, InterruptedException, InvalidStatusCodeException {
+        params.put(Constants.BASE64_ATTRIBUTE, Constants.FLAG_TRUE);
         SignedUrlResponse response = this.generateSignedUrl(service, Resource.BATCH, metadata, params);
 
         Map<String, String> urls = response.getUrls();
@@ -654,7 +655,7 @@ public class Client {
                 return response;
             }
 
-            if (Instant.now().isBefore(end)) {
+            if (Instant.now().isAfter(end)) {
                 throw new TimeoutException(this.timeout);
             }
 
@@ -687,7 +688,7 @@ public class Client {
                 break;
             }
 
-            if (Instant.now().isBefore(end)) {
+            if (Instant.now().isAfter(end)) {
                 throw new TimeoutException(this.timeout);
             }
 

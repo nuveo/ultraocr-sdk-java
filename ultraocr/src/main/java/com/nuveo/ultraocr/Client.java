@@ -411,7 +411,7 @@ public class Client {
     public CreatedResponse sendJob(String service, String filePath, Map<String, Object> metadata,
             Map<String, String> params) throws IOException, InterruptedException, InvalidStatusCodeException {
         SignedUrlResponse response = this.generateSignedUrl(service, Resource.JOB, metadata, params);
-        
+
         Map<String, String> urls = response.getUrls();
         this.uploadFileWithPath(urls.get(Constants.KEY_DOCUMENT), filePath);
 

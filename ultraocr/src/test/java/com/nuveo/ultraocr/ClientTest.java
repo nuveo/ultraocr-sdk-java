@@ -196,7 +196,7 @@ class ClientTest {
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient, "123", "123", 60);
         HashMap map = new HashMap<>();
-        List<Map<String,Object>> metadata = new ArrayList<>();
+        List<Map<String, Object>> metadata = new ArrayList<>();
         assertDoesNotThrow(() -> client.sendBatch("rg", "./pom.xml", metadata, map));
     }
 
@@ -208,7 +208,7 @@ class ClientTest {
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient);
         HashMap map = new HashMap<>();
-        List<Map<String,Object>> metadata = new ArrayList<>();
+        List<Map<String, Object>> metadata = new ArrayList<>();
         assertThrows(InvalidStatusCodeException.class, () -> client.sendBatch("123", "123", metadata, map));
     }
 
@@ -234,14 +234,16 @@ class ClientTest {
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient);
         HashMap map = new HashMap<>();
-        assertThrows(InvalidStatusCodeException.class, () -> client.sendJobSingleStep("123", "123", "123", "123", map, map));
+        assertThrows(InvalidStatusCodeException.class,
+                () -> client.sendJobSingleStep("123", "123", "123", "123", map, map));
     }
 
     @Test
     void shouldSendJobComplete() throws IOException, InterruptedException {
         HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
         Mockito.when(mockResponse.statusCode()).thenReturn(200);
-        Mockito.when(mockResponse.body()).thenReturn("{\"urls\":{\"document\": \"https://www.example.com\", \"selfie\": \"https://www.example.com\", \"extra_document\": \"https://www.example.com\"}}");
+        Mockito.when(mockResponse.body()).thenReturn(
+                "{\"urls\":{\"document\": \"https://www.example.com\", \"selfie\": \"https://www.example.com\", \"extra_document\": \"https://www.example.com\"}}");
         HttpClient httpClient = Mockito.mock(HttpClient.class);
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient, "123", "123", 60);
@@ -271,7 +273,7 @@ class ClientTest {
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient, "123", "123", 60);
         HashMap map = new HashMap<>();
-        List<Map<String,Object>> metadata = new ArrayList<>();
+        List<Map<String, Object>> metadata = new ArrayList<>();
         assertDoesNotThrow(() -> client.sendBatchBase64("rg", "123", metadata, map));
     }
 
@@ -283,7 +285,7 @@ class ClientTest {
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient);
         HashMap map = new HashMap<>();
-        List<Map<String,Object>> metadata = new ArrayList<>();
+        List<Map<String, Object>> metadata = new ArrayList<>();
         assertThrows(InvalidStatusCodeException.class, () -> client.sendBatchBase64("123", "123", metadata, map));
     }
 
@@ -310,12 +312,12 @@ class ClientTest {
         assertThrows(InvalidStatusCodeException.class, () -> client.sendJobBase64("123", "123", map, map));
     }
 
-
     @Test
     void shouldSendJobBase64Complete() throws IOException, InterruptedException {
         HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
         Mockito.when(mockResponse.statusCode()).thenReturn(200);
-        Mockito.when(mockResponse.body()).thenReturn("{\"urls\":{\"document\": \"https://www.example.com\", \"selfie\": \"https://www.example.com\", \"extra_document\": \"https://www.example.com\"}}");
+        Mockito.when(mockResponse.body()).thenReturn(
+                "{\"urls\":{\"document\": \"https://www.example.com\", \"selfie\": \"https://www.example.com\", \"extra_document\": \"https://www.example.com\"}}");
         HttpClient httpClient = Mockito.mock(HttpClient.class);
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient, "123", "123", 60);
@@ -333,7 +335,8 @@ class ClientTest {
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient);
         HashMap map = new HashMap<>();
-        assertThrows(InvalidStatusCodeException.class, () -> client.sendJobBase64("123", "123", "123", "123", map, map));
+        assertThrows(InvalidStatusCodeException.class,
+                () -> client.sendJobBase64("123", "123", "123", "123", map, map));
     }
 
     @Test
@@ -417,15 +420,15 @@ class ClientTest {
     void shouldCreateAndWaitBatch() throws IOException, InterruptedException {
         HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
         Mockito.when(mockResponse.statusCode()).thenReturn(200);
-        Mockito.when(mockResponse.body()).thenReturn("{\"urls\":{\"document\": \"https://www.example.com\", \"selfie\": \"https://www.example.com\", \"extra_document\": \"https://www.example.com\"}, \"status\":\"done\"}");
+        Mockito.when(mockResponse.body()).thenReturn(
+                "{\"urls\":{\"document\": \"https://www.example.com\", \"selfie\": \"https://www.example.com\", \"extra_document\": \"https://www.example.com\"}, \"status\":\"done\"}");
         HttpClient httpClient = Mockito.mock(HttpClient.class);
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient);
         HashMap map = new HashMap<>();
-        List<Map<String,Object>> metadata = new ArrayList<>();
+        List<Map<String, Object>> metadata = new ArrayList<>();
         assertDoesNotThrow(() -> client.createAndWaitBatch("123", "./pom.xml", metadata, map, false));
     }
-
 
     @Test
     void shouldFailToCreateAndWaitBatch() throws IOException, InterruptedException {
@@ -435,22 +438,23 @@ class ClientTest {
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient);
         HashMap map = new HashMap<>();
-        List<Map<String,Object>> metadata = new ArrayList<>();
-        assertThrows(InvalidStatusCodeException.class, () -> client.createAndWaitBatch("123", "./pom.xml", metadata, map, false));
+        List<Map<String, Object>> metadata = new ArrayList<>();
+        assertThrows(InvalidStatusCodeException.class,
+                () -> client.createAndWaitBatch("123", "./pom.xml", metadata, map, false));
     }
 
     @Test
     void shouldCreateAndWaitJob() throws IOException, InterruptedException {
         HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
         Mockito.when(mockResponse.statusCode()).thenReturn(200);
-        Mockito.when(mockResponse.body()).thenReturn("{\"urls\":{\"document\": \"https://www.example.com\", \"selfie\": \"https://www.example.com\", \"extra_document\": \"https://www.example.com\"}, \"status\":\"done\"}");
+        Mockito.when(mockResponse.body()).thenReturn(
+                "{\"urls\":{\"document\": \"https://www.example.com\", \"selfie\": \"https://www.example.com\", \"extra_document\": \"https://www.example.com\"}, \"status\":\"done\"}");
         HttpClient httpClient = Mockito.mock(HttpClient.class);
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient);
         HashMap map = new HashMap<>();
         assertDoesNotThrow(() -> client.createAndWaitJob("123", "./pom.xml", map, map));
     }
-
 
     @Test
     void shouldFailToCreateAndWaitJob() throws IOException, InterruptedException {
@@ -467,14 +471,14 @@ class ClientTest {
     void shouldCreateAndWaitJobComplete() throws IOException, InterruptedException {
         HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
         Mockito.when(mockResponse.statusCode()).thenReturn(200);
-        Mockito.when(mockResponse.body()).thenReturn("{\"urls\":{\"document\": \"https://www.example.com\", \"selfie\": \"https://www.example.com\", \"extra_document\": \"https://www.example.com\"}, \"status\":\"done\"}");
+        Mockito.when(mockResponse.body()).thenReturn(
+                "{\"urls\":{\"document\": \"https://www.example.com\", \"selfie\": \"https://www.example.com\", \"extra_document\": \"https://www.example.com\"}, \"status\":\"done\"}");
         HttpClient httpClient = Mockito.mock(HttpClient.class);
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient);
         HashMap map = new HashMap<>();
         assertDoesNotThrow(() -> client.createAndWaitJob("123", "./pom.xml", map, map));
     }
-
 
     @Test
     void shouldFailToCreateAndWaitJobComplete() throws IOException, InterruptedException {
@@ -486,7 +490,6 @@ class ClientTest {
         HashMap map = new HashMap<>();
         assertThrows(InvalidStatusCodeException.class, () -> client.createAndWaitJob("123", "./pom.xml", map, map));
     }
-
 
     @Test
     void shouldGetJobs() throws IOException, InterruptedException {
@@ -503,7 +506,9 @@ class ClientTest {
     void shouldGetJobsWithToken() throws IOException, InterruptedException {
         HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
         Mockito.when(mockResponse.statusCode()).thenReturn(200);
-        Mockito.when(mockResponse.body()).thenReturn("{\"jobs\":[{\"job_ksuid\":\"1234\"}], \"nextPageToken\": \"1234\"}").thenReturn("{\"jobs\":[{\"job_ksuid\":\"1234\"}]}");
+        Mockito.when(mockResponse.body())
+                .thenReturn("{\"jobs\":[{\"job_ksuid\":\"1234\"}], \"nextPageToken\": \"1234\"}")
+                .thenReturn("{\"jobs\":[{\"job_ksuid\":\"1234\"}]}");
         HttpClient httpClient = Mockito.mock(HttpClient.class);
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient, "123", "123", 60);

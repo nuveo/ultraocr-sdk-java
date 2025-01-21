@@ -9,15 +9,15 @@ public class SignedUrlResponse {
     private String statusUrl;
 
     private String id;
-    private int expires;
+    private long exp;
     private Map<String, String> urls;
 
-    public int getExpires() {
-        return expires;
+    public long getExp() {
+        return exp;
     }
 
-    public void setExpires(int expires) {
-        this.expires = expires;
+    public void setExp(long exp) {
+        this.exp = exp;
     }
 
     public String getId() {

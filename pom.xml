@@ -6,7 +6,7 @@
 
   <groupId>com.nuveo.ultraocr</groupId>
   <artifactId>ultraocr</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
 
   <name>ultraocr</name>
   <url>https://ultraocr.com.br</url>
@@ -16,6 +16,14 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
   </properties>
+
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <name>GitHub nuveo Apache Maven Packages</name>
+      <url>https://maven.pkg.github.com/nuveo/ultraocr-sdk-java</url>
+    </repository>
+  </distributionManagement>
 
   <dependencies>
     <dependency>

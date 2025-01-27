@@ -17,6 +17,8 @@ public class Constants {
     public static final String KEY_DOCUMENT = "document";
     public static final String KEY_FACEMATCH = "facematch";
     public static final String KEY_EXTRA = "extra-document";
+    public static final String KEY_SELFIER = "selfier";
+    public static final String KEY_EXTRA_URL = "extra_document";
     public static final String FLAG_TRUE = "true";
     public static final String BASE64_ATTRIBUTE = "base64";
 

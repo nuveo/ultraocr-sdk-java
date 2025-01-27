@@ -446,11 +446,11 @@ public class Client {
 
         if (params.containsKey(Constants.KEY_FACEMATCH)
                 && params.get(Constants.KEY_FACEMATCH).equals(Constants.FLAG_TRUE)) {
-            this.uploadFileWithPath(urls.get("selfie"), facematchFilePath);
+            this.uploadFileWithPath(urls.get(Constants.KEY_SELFIE), facematchFilePath);
         }
 
         if (params.containsKey(Constants.KEY_EXTRA) && params.get(Constants.KEY_EXTRA).equals(Constants.FLAG_TRUE)) {
-            this.uploadFileWithPath(urls.get("extra_document"), extraFilePath);
+            this.uploadFileWithPath(urls.get(Constants.KEY_EXTRA_URL), extraFilePath);
         }
 
         CreatedResponse res = new CreatedResponse();
@@ -516,11 +516,11 @@ public class Client {
 
         if (params.containsKey(Constants.KEY_FACEMATCH)
                 && params.get(Constants.KEY_FACEMATCH).equals(Constants.FLAG_TRUE)) {
-            this.uploadFile(urls.get("selfie"), facematchFile.getBytes());
+            this.uploadFile(urls.get(Constants.KEY_SELFIE), facematchFile.getBytes());
         }
 
         if (params.containsKey(Constants.KEY_EXTRA) && params.get(Constants.KEY_EXTRA).equals(Constants.FLAG_TRUE)) {
-            this.uploadFile(urls.get("extra_document"), extraFile.getBytes());
+            this.uploadFile(urls.get(Constants.KEY_EXTRA_URL), extraFile.getBytes());
         }
 
         CreatedResponse res = new CreatedResponse();

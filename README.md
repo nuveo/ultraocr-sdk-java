@@ -8,9 +8,14 @@ For more details about the system, types of documents, routes and params, access
 
 ## Instalation
 
-First of all, you must install this package with mvn:
+First of all, you must install this package with mvn, adding this dependency to your `pom.xml`:
 
 ```
+<dependency>
+  <groupId>com.nuveo.ultraocr</groupId>
+  <artifactId>ultraocr</artifactId>
+  <version>1.0.2</version>
+</dependency>
 ```
 
 Then you must import the UltraOCR SDK in your code with:

@@ -12,5 +12,4 @@ jobs:
           java-version: 17
       - name: Run unit tests
         run: |
-          cd ultraocr
           mvn -B package --file pom.xml

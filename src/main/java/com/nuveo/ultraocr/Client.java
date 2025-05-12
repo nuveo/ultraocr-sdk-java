@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * Client to help on UltraOCR usage. For more details about all arguments and
@@ -259,6 +260,15 @@ public class Client {
                 .build();
 
         return this.httpClient.send(request, BodyHandlers.ofString());
+    }
+
+    private String getBatchResult(String batchKsuid, Map<String, String> params)
+            throws IOException, InterruptedException, InvalidStatusCodeException {
+        String url = String.format("%s/ocr/batch/result/%s", this.baseUrl, batchKsuid);
+        HttpResponse<String> response = this.get(url, params);
+        validateStatus(Constants.STATUS_OK, response.statusCode());
+
+        return response.body();
     }
 
     /**
@@ -815,5 +825,86 @@ public class Client {
         }
 
         return jobs;
+    }
+
+    /**
+     * Get the job info with more details.
+     * 
+     * @param jobKsuid the id of the job, given on job creation.
+     * @return the job with infos.
+     * @see JobInfoResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
+    public JobInfoResponse getJobInfo(String jobKsuid)
+            throws IOException, InterruptedException, InvalidStatusCodeException {
+        String url = String.format("%s/ocr/job/info/%s", this.baseUrl, jobKsuid);
+        HttpResponse<String> response = this.get(url, new HashMap<>());
+        validateStatus(Constants.STATUS_OK, response.statusCode());
+
+        Gson gson = new Gson();
+        return gson.fromJson(response.body(), JobInfoResponse.class);
+    }
+
+    /**
+     * Get the infos of the batch with more details.
+     * 
+     * @param batchKsuid the id of the batch, given on batch creation.
+     * @return the batch with infos.
+     * @see BatchInfoResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
+    public BatchInfoResponse getBatchInfo(String batchKsuid)
+            throws IOException, InterruptedException, InvalidStatusCodeException {
+        String url = String.format("%s/ocr/batch/info/%s", this.baseUrl, batchKsuid);
+        HttpResponse<String> response = this.get(url, new HashMap<>());
+        validateStatus(Constants.STATUS_OK, response.statusCode());
+
+        Gson gson = new Gson();
+        return gson.fromJson(response.body(), BatchInfoResponse.class);
+    }
+
+    /**
+     * Get the batch jobs results as array.
+     * 
+     * @param batchKsuid the id of the batch, given on batch creation.
+     * @return the batch jobs results.
+     * @see List<BatchResultJob>
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
+    public List<BatchResultJob> getBatchResult(String batchKsuid)
+            throws IOException, InterruptedException, InvalidStatusCodeException {
+        Map<String, String> params = new HashMap<>();
+        params.put(Constants.RETURN_ATTRIBUTE, Constants.RETURN_REQUEST);
+        String body = this.getBatchResult(batchKsuid, params);
+
+        Gson gson = new Gson();
+        return gson.fromJson(body, new TypeToken<List<BatchResultJob>>() {
+        }.getType());
+    }
+
+    /**
+     * Generate url to download a file containing the batch jobs results.
+     * 
+     * @param batchKsuid the id of the batch, given on batch creation.
+     * @param params     the query parameters based on UltraOCR Docs.
+     * @return the url to download result file.
+     * @see BatchResultStorageResponse
+     * @throws InvalidStatusCodeException if status code is not 200.
+     * @throws InterruptedException       if http request fail.
+     * @throws IOException                if http request fail.
+     */
+    public BatchResultStorageResponse getBatchResultStorage(String batchKsuid, Map<String, String> params)
+            throws IOException, InterruptedException, InvalidStatusCodeException {
+        params.put(Constants.RETURN_ATTRIBUTE, Constants.RETURN_STORAGE);
+        String body = this.getBatchResult(batchKsuid, params);
+
+        Gson gson = new Gson();
+        return gson.fromJson(body, BatchResultStorageResponse.class);
     }
 }

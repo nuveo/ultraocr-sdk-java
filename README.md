@@ -161,6 +161,12 @@ With the job or batch id, you can get the job result or batch status with:
 BatchStatusResponse response = client.getBatchStatus("BATCH_ID"); // Batches
 JobResultResponse jobResponse = client.getJobResult("JOB_ID", "JOB_ID"); // Simple jobs
 JobResultResponse jobResponse2 = client.getJobResult("BATCH_ID", "JOB_ID"); // Jobs belonging to batches
+List<BatchResultJob> batchResult = client.getBatchResult("BATCH_ID"); // Get batch jobs result as array
+BatchResultStorageResponse storage = client.getBatchResultStorage("BATCH_ID", params); // Get batch jobs result in a file
+
+// More details about job and batch
+BatchInfoResponse batchInfo = client.getBatchInfo("BATCH_ID"); // Batches info (without jobs info)
+JobInfoResponse jobInfo = client.getJobInfo("JOB_ID"); // Jobs info (single jobs only)
 ```
 
 Alternatively, you can use a utily `waitForJobDone` or `waitForBatchDone`:

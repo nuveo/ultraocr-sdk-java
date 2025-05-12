@@ -2,6 +2,7 @@ package com.nuveo.ultraocr;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.net.http.HttpClient;
@@ -17,6 +18,7 @@ import org.mockito.Mockito;
 import com.nuveo.ultraocr.enums.Resource;
 import com.nuveo.ultraocr.exceptions.InvalidStatusCodeException;
 import com.nuveo.ultraocr.exceptions.TimeoutException;
+import com.nuveo.ultraocr.responses.BatchResultJob;
 
 class ClientTest {
     @Test
@@ -523,5 +525,101 @@ class ClientTest {
         Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
         Client client = new Client(httpClient);
         assertThrows(InvalidStatusCodeException.class, () -> client.getJobs("123", "123"));
+    }
+
+    @Test
+    void shouldGetJobInfo() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(200);
+        Mockito.when(mockResponse.body()).thenReturn("{}");
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        assertDoesNotThrow(() -> client.getJobInfo("123"));
+    }
+
+    @Test
+    void shouldFailToGetJobInfo() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(400);
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        assertThrows(InvalidStatusCodeException.class, () -> client.getJobInfo("123"));
+    }
+
+    @Test
+    void shouldGetBatchInfo() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(200);
+        Mockito.when(mockResponse.body()).thenReturn("{}");
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        assertDoesNotThrow(() -> client.getBatchInfo("123"));
+    }
+
+    @Test
+    void shouldFailToGetBatchInfo() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(400);
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        assertThrows(InvalidStatusCodeException.class, () -> client.getBatchInfo("123"));
+    }
+
+    @Test
+    void shouldGetBatchResultStorage() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(200);
+        Mockito.when(mockResponse.body()).thenReturn("{}");
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        assertDoesNotThrow(() -> client.getBatchResultStorage("123", new HashMap<>()));
+    }
+
+    @Test
+    void shouldFailToGetBatchResultStorage() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(400);
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        assertThrows(InvalidStatusCodeException.class, () -> client.getBatchResultStorage("123", new HashMap<>()));
+    }
+
+    @Test
+    void shouldGetBatchResult() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(200);
+        Mockito.when(mockResponse.body()).thenReturn("[]");
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        assertDoesNotThrow(() -> client.getBatchResult("123"));
+    }
+
+    @Test
+    void shouldGetBatchResultWithJob() throws IOException, InterruptedException, InvalidStatusCodeException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(200);
+        Mockito.when(mockResponse.body()).thenReturn("[{\"job_ksuid\":\"123\"}]");
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        List<BatchResultJob> jobs = client.getBatchResult("123");
+        assertEquals(jobs.size(), 1);
+    }
+
+    @Test
+    void shouldFailToGetBatchResult() throws IOException, InterruptedException {
+        HttpResponse mockResponse = Mockito.mock(HttpResponse.class);
+        Mockito.when(mockResponse.statusCode()).thenReturn(400);
+        HttpClient httpClient = Mockito.mock(HttpClient.class);
+        Mockito.when(httpClient.send(Mockito.any(), Mockito.any())).thenReturn(mockResponse);
+        Client client = new Client(httpClient);
+        assertThrows(InvalidStatusCodeException.class, () -> client.getBatchResult("123"));
     }
 }

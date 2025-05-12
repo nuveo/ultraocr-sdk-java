@@ -2,15 +2,12 @@ package com.nuveo.ultraocr.responses;
 
 import com.google.gson.annotations.SerializedName;
 
-public class JobResultResponse {
+public class BatchResultJob {
     @SerializedName("job_ksuid")
     private String jobKsuid;
 
     @SerializedName("created_at")
     private String createdAt;
-
-    @SerializedName("process_time")
-    private String processTime;
 
     @SerializedName("validation_status")
     private String validationStatus;
@@ -39,14 +36,6 @@ public class JobResultResponse {
 
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public String getProcessTime() {
-        return processTime;
-    }
-
-    public void setProcessTime(String processTime) {
-        this.processTime = processTime;
     }
 
     public String getValidationStatus() {

@@ -14,7 +14,7 @@ First of all, you must install this package with mvn, adding this dependency to 
 <dependency>
   <groupId>com.nuveo.ultraocr</groupId>
   <artifactId>ultraocr</artifactId>
-  <version>1.0.2</version>
+  <version>1.1.0</version>
 </dependency>
 ```
 
